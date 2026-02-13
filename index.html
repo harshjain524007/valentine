@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Be My Valentine?</title>
+  <style>
+    :root{
+      --bg1:#ffdde1;
+      --bg2:#ee9ca7;
+      --card:#ffffffcc;
+      --text:#2b2b2b;
+      --yes:#22c55e;
+      --no:#ef4444;
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:var(--text);
+      background: radial-gradient(circle at top, var(--bg1), var(--bg2));
+      overflow:hidden;
+    }
+
+    .card{
+      width:min(720px, 92vw);
+      padding: clamp(20px, 5vw, 40px);
+      border-radius: 28px;
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.18);
+      text-align:center;
+      position:relative;
+    }
+
+    h1{
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4.5vw, 44px);
+      letter-spacing: -0.02em;
+    }
+
+    p{
+      margin: 0 0 26px;
+      font-size: clamp(14px, 2.2vw, 18px);
+      opacity: .9;
+    }
+
+    .stage{
+      position:relative;
+      height: 220px;
+      margin-top: 10px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.55);
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .btn{
+      border:0;
+      cursor:pointer;
+      padding: 14px 22px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.15);
+      transition: transform .15s ease, filter .15s ease, opacity .15s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      position:absolute;
+    }
+
+    .btn:active{ transform: scale(.98); }
+
+    #yesBtn{
+      background: var(--yes);
+      color: white;
+      left: 34%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #noBtn{
+      background: var(--no);
+      color: white;
+      left: 66%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .hint{
+      margin-top: 18px;
+      font-size: 13px;
+      opacity: .75;
+    }
+
+    .hearts{
+      position:absolute;
+      inset: -20px;
+      pointer-events:none;
+      opacity:.35;
+      filter: blur(.2px);
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,.8) 0 2px, transparent 3px),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,.7) 0 2px, transparent 3px),
+        radial-gradient(circle at 70% 80%, rgba(255,255,255,.6) 0 2px, transparent 3px),
+        radial-gradient(circle at 30% 75%, rgba(255,255,255,.6) 0 2px, transparent 3px);
+    }
+
+    /* Small screens: make stage taller */
+    @media (max-width: 480px){
+      .stage{ height: 260px; }
+      .btn{ font-size: 16px; padding: 12px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="hearts"></div>
+    <h1>Will you be my Valentine? 💘</h1>
+    <p>I have a very important question… choose wisely 😌</p>
+
+    <div class="stage" id="stage" aria-label="Valentine stage">
+      <button class="btn" id="yesBtn" type="button">Yes</button>
+      <button class="btn" id="noBtn" type="button">No</button>
+    </div>
+
+    <div class="hint">Tip: “No” might be… hard to catch 👀</div>
+  </div>
+
+  <script>
+    const stage = document.getElementById("stage");
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn  = document.getElementById("noBtn");
+
+    let yesScale = 1;
+    let noScale  = 1;
+    let dodges   = 0;
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function stageRect(){
+      return stage.getBoundingClientRect();
+    }
+
+    function randomPosition(button){
+      const s = stageRect();
+      const b = button.getBoundingClientRect();
+
+      // Keep within stage padding
+      const pad = 16;
+      const maxX = s.width - b.width - pad;
+      const maxY = s.height - b.height - pad;
+
+      const x = pad + Math.random() * clamp(maxX, 0, maxX);
+      const y = pad + Math.random() * clamp(maxY, 0, maxY);
+
+      // Position relative to stage
+      button.style.left = `${(x / s.width) * 100}%`;
+      button.style.top  = `${(y / s.height) * 100}%`;
+    }
+
+    function applyScales(){
+      yesBtn.style.transform = `translate(-50%, -50%) scale(${yesScale})`;
+      noBtn.style.transform  = `translate(-50%, -50%) scale(${noScale})`;
+    }
+
+    function dodgeNo(){
+      dodges += 1;
+
+      // Yes grows, No shrinks
+      yesScale = clamp(yesScale + 0.12, 1, 2.4);
+      noScale  = clamp(noScale  - 0.10, 0.35, 1);
+
+      // Make No harder to click
+      noBtn.style.filter = `saturate(${clamp(1.1 - dodges*0.05, 0.7, 1.1)})`;
+      noBtn.style.opacity = `${clamp(1 - dodges*0.07, 0.45, 1)}`;
+
+      applyScales();
+      randomPosition(noBtn);
+
+      // If it gets *too* small, make it tiny & slippery
+      if (noScale <= 0.45){
+        noBtn.textContent = "Nope";
+      }
+    }
+
+    // Start positions (safe)
+    function init(){
+      applyScales();
+      // keep initial positions but slightly randomize No so it feels alive
+      setTimeout(() => randomPosition(noBtn), 200);
+    }
+
+    // “No” dodges on hover (desktop) and on touchstart/mousedown (mobile-friendly)
+    noBtn.addEventListener("mouseenter", dodgeNo);
+    noBtn.addEventListener("mousedown", (e) => { e.preventDefault(); dodgeNo(); });
+    noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); dodgeNo(); }, {passive:false});
+    noBtn.addEventListener("click", (e) => { e.preventDefault(); dodgeNo(); });
+
+    // Yes -> go to letter page
+    yesBtn.addEventListener("click", () => {
+      // tiny celebratory effect
+      yesBtn.textContent = "Yay!! 💖";
+      yesBtn.style.filter = "brightness(1.05)";
+      setTimeout(() => {
+        window.location.href = "./letter.html";
+      }, 550);
+    });
+
+    // If window resizes, keep No within bounds
+    window.addEventListener("resize", () => {
+      randomPosition(noBtn);
+    });
+
+    init();
+  </script>
+</body>
+</html>
